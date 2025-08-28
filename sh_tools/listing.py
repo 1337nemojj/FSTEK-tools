@@ -11,24 +11,131 @@ def detect_language_by_extension(filename: str) -> str:
     ext = ext.lstrip('.')  
 
     extension_map = {
+        # Programming Languages
         'py': 'Python',
+        'ipynb': 'Jupyter Notebook',
         'js': 'JavaScript',
+        'jsx': 'JavaScript (JSX)',
         'ts': 'TypeScript',
+        'tsx': 'TypeScript (TSX)',
         'java': 'Java',
-        'cpp': 'C++',
-        'hpp': 'C++ Header',
-        'h': 'C/C++ Header',
-        'c': 'C',
-        'html': 'HTML',
-        'css': 'CSS',
-        'json': 'JSON',
-        'xml': 'XML',
-        'md': 'Markdown',
-        'php': 'PHP',
-        'sql': 'SQL',
-        'yaml': 'YAML',
+        'kt': 'Kotlin',
+        'kts': 'Kotlin Script',
+        'scala': 'Scala',
+        'groovy': 'Groovy',
         'go': 'GOLANG',
+        'rs': 'Rust',
+        'c': 'C',
+        'h': 'C/C++ Header',
+        'cpp': 'C++',
+        'cc': 'C++',
+        'cxx': 'C++',
+        'hpp': 'C++ Header',
+        'hxx': 'C++ Header',
+        'hh': 'C++ Header',
+        'cs': 'C#',
+        'vb': 'Visual Basic .NET',
+        'swift': 'Swift',
+        'm': 'Objective-C',
+        'mm': 'Objective-C++',
+        'php': 'PHP',
+        'dart': 'Dart',
+        'rb': 'Ruby',
+        'pl': 'Perl',
+        'pm': 'Perl Module',
+        'r': 'R',
+        'lua': 'Lua',
+        'ex': 'Elixir',
+        'exs': 'Elixir',
+        'erl': 'Erlang',
+        'hrl': 'Erlang Header',
+        'clj': 'Clojure',
+        'cljs': 'ClojureScript',
+        'lisp': 'Lisp',
+        'el': 'Emacs Lisp',
+        'nim': 'Nim',
+        'zig': 'Zig',
+        'asm': 'Assembly',
+        's': 'Assembly',
+        'S': 'Assembly',
+        'vala': 'Vala',
+        'wasm': 'WebAssembly',
+    
+        # Web / Markup / Styling
+        'html': 'HTML',
+        'htm': 'HTML',
+        'css': 'CSS',
+        'scss': 'SCSS',
+        'sass': 'SASS',
+        'less': 'LESS',
+        'xml': 'XML',
+        'json': 'JSON',
+        'jsonc': 'JSON with Comments',
+        'yaml': 'YAML',
+        'yml': 'YAML',
+    
+        # Markdown / Text
+        'md': 'Markdown',
+        'markdown': 'Markdown',
+        'txt': 'Plain Text',
+        'rst': 'reStructuredText',
+        'adoc': 'AsciiDoc',
+    
+        # Shell / Scripting
+        'sh': 'Shell Script',
+        'bash': 'Bash Script',
+        'zsh': 'Zsh Script',
+        'fish': 'Fish Script',
+        'bat': 'Batch File',
+        'cmd': 'Batch File',
+        'ps1': 'PowerShell',
+    
+        # Config / Build
+        'env': '.env File',
+        'ini': 'INI Config',
+        'cfg': 'Config File',
+        'conf': 'Config File',
+        'toml': 'TOML',
+        'lock': 'Lock File',
+        'yarn.lock': 'Yarn Lock',
+        'package-lock.json': 'NPM Lock',
+        'tsconfig.json': 'TypeScript Config',
+        'package.json': 'NPM Package Config',
+        'pyproject.toml': 'Python Project Config',
+        'requirements.txt': 'Python Requirements',
+        'setup.py': 'Python Setup',
+        'make': 'Makefile',
+        'mk': 'Makefile',
+        'cmake': 'CMake',
+        'gradle': 'Gradle',
+        'build.gradle': 'Gradle Build Script',
+        'pom.xml': 'Maven Config',
+        'dockerfile': 'Dockerfile',
+        'docker': 'Dockerfile',
+    
+        # Data / Logs
+        'csv': 'CSV',
+        'tsv': 'TSV',
+        'log': 'Log File',
+    
+        # Docs / Office
+        'pdf': 'PDF',
+        'doc': 'Word Document',
+        'docx': 'Word Document',
+        'xls': 'Excel Spreadsheet',
+        'xlsx': 'Excel Spreadsheet',
+        'ppt': 'PowerPoint',
+        'pptx': 'PowerPoint',
+    
+        # SQL / Database
+        'sql': 'SQL',
+        'db': 'Database File',
+        'sqlite': 'SQLite Database',
+    
+        # Default
+        '*': 'Other'
     }
+
     return extension_map.get(ext, 'Other')
 
 def get_size_category(size_kb: float) -> str:
@@ -224,3 +331,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
