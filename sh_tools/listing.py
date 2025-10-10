@@ -3,10 +3,6 @@ import concurrent.futures
 from tqdm import tqdm
 
 def detect_language_by_extension(filename: str) -> str:
-    """
-    Простейший метод определения "языка" файла по расширению.
-    Вы можете расширить или изменить логику определения.
-    """
     _, ext = os.path.splitext(filename.lower())
     ext = ext.lstrip('.')  
 
@@ -139,10 +135,6 @@ def detect_language_by_extension(filename: str) -> str:
     return extension_map.get(ext, 'Other')
 
 def get_size_category(size_kb: float) -> str:
-    """
-    Возвращает категорию размера файла: 0 KB, 1–5 KB, 6–10 KB, 11–50 KB, 51–100 KB, >100 KB.
-    Вы можете скорректировать интервалы по необходимости.
-    """
     if size_kb == 0:
         return '0 KB'
     elif 0 < size_kb <= 5:
@@ -157,37 +149,19 @@ def get_size_category(size_kb: float) -> str:
         return '>100 KB'
 
 def process_file(index, file_path):
-    """
-    Функция для асинхронного чтения (используется в пуле потоков).
-    Возвращает кортеж: (индекс, словарь статистики, содержимое/ошибка).
-    """
-    language = 'Other'  
+    language = 'Other'
     try:
         size_bytes = os.path.getsize(file_path)
         size_kb = size_bytes / 1024
         language = detect_language_by_extension(file_path)
-
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8', errors='ignore') as f:
             content = f.read()
     except Exception as e:
-        return index, {
-            'language': language,
-            'size_kb': 0
-        }, f"<Error reading file: {e}>\n"
+        return index, {'language': language, 'size_kb': 0}, f"<Error reading file: {e}>"
 
-    return index, {
-        'language': language,
-        'size_kb': size_kb
-    }, content
+    return index, {'language': language, 'size_kb': size_kb}, content
 
 def generate_listing_and_stats(root_dir, output_stats_file, output_listing_file):
-    """
-    Сканирует файлы в `root_dir` (рекурсивно), формирует:
-      - файл с общей информацией (output_stats_file),
-      - файл с листингом (output_listing_file).
-    Также выводит сводную статистику в консоль.
-    """
-
     all_files = []
     for foldername, _, filenames in os.walk(root_dir):
         for filename in filenames:
@@ -201,14 +175,8 @@ def generate_listing_and_stats(root_dir, output_stats_file, output_listing_file)
     
     results = [None] * total_files
     with concurrent.futures.ThreadPoolExecutor() as executor:
-        futures_map = {}
-        for i, file_path in enumerate(all_files):
-            future = executor.submit(process_file, i, file_path)
-            futures_map[future] = i
-
-        for future in tqdm(concurrent.futures.as_completed(futures_map),
-                           total=len(futures_map),
-                           desc="Сканирование"):
+        futures_map = {executor.submit(process_file, i, path): i for i, path in enumerate(all_files)}
+        for future in tqdm(concurrent.futures.as_completed(futures_map), total=len(futures_map), desc="Сканирование"):
             i, stats, content = future.result()
             results[i] = (all_files[i], stats, content)
     
@@ -231,54 +199,38 @@ def generate_listing_and_stats(root_dir, output_stats_file, output_listing_file)
 
     total_size_kb = total_size_bytes / 1024 if total_size_bytes else 0
 
+    # === Запись общей статистики ===
     with open(output_stats_file, 'w', encoding='utf-8') as stats_out:
-        # Общая информация
         stats_out.write("======== Информация о проекте ========\n\n")
         stats_out.write(f"Каталог сканирования: {root_dir}\n")
         stats_out.write(f"Всего файлов: {total_files}\n")
         stats_out.write(f"Общий размер (в байтах): {int(total_size_bytes)}\n")
         stats_out.write(f"Общий размер (в KB): {total_size_kb:.2f}\n\n")
 
-        # В консоль добавить херню для вывода заколовков таблиц 
         print("\n===== Итоговая статистика =====")
         print(f"Каталог сканирования: {root_dir}")
         print(f"Всего файлов: {total_files}")
-        print(f"Общий размер (в байтах): {int(total_size_bytes)}")
         print(f"Общий размер (в KB): {total_size_kb:.2f}")
 
-        # Статистика по языкам 
         stats_out.write("=== Статистика по языкам ===\n")
-        stats_out.write("Язык (расширение) | Файлов | % от общего числа | Общий размер (KB) | % от общего объёма\n")
+        stats_out.write("Язык | Файлов | % от общего | Общий размер (KB) | % от объёма\n")
         stats_out.write("-" * 79 + "\n")
 
         print("\n=== Статистика по языкам ===")
-        for lang, data in language_stats.items():
-            count = data['count']
-            size_kb_sum = data['size']
+        langs_sorted = sorted(language_stats.items(), key=lambda x: x[1]['size'], reverse=True)
+        for lang, data in langs_sorted:
+            count, size_kb_sum = data['count'], data['size']
             count_percent = (count / total_files) * 100 if total_files else 0
             size_percent = (size_kb_sum / total_size_kb) * 100 if total_size_kb else 0
 
             line = (
-                f"{lang:20s} | {count:6d} | {count_percent:16.2f}% "
-                f"| {size_kb_sum:17.2f} | {size_percent:18.2f}%\n"
+                f"{lang:20s} | {count:6d} | {count_percent:10.2f}% "
+                f"| {size_kb_sum:15.2f} | {size_percent:12.2f}%\n"
             )
             stats_out.write(line)
             print(line, end='')
 
-        stats_out.write("\n")
-
-        # Распределение по размерам
-        stats_out.write("=== Распределение по размерам файлов ===\n")
-        stats_out.write("Категория       | Кол-во файлов\n")
-        stats_out.write("-" * 35 + "\n")
-
-        print("\n=== Распределение по размерам файлов ===")
-        print("Категория             | Кол-во файлов")
-        for cat, cat_count in size_distribution.items():
-            line = f"{cat:15s} | {cat_count:6d}\n"
-            stats_out.write(line)
-            print(line, end='')
-    
+    # === Запись листинга файлов ===
     with open(output_listing_file, 'w', encoding='utf-8') as listing_out:
         listing_out.write("======== Листинг файлов ========\n\n")
         for (file_path, _, content) in results:
@@ -287,30 +239,46 @@ def generate_listing_and_stats(root_dir, output_stats_file, output_listing_file)
             listing_out.write("-----" * 20 + "\n")
             listing_out.write(content + "\n")
 
+    # === Новый функционал: выбор языка и формирование списка ===
+    print("\n=== Найденные языки ===")
+    langs = [lang for lang in language_stats.keys()]
+    for i, lang in enumerate(langs, start=1):
+        print(f"{i}) {lang} ({language_stats[lang]['count']} файлов, {language_stats[lang]['size']:.2f} KB)")
+
+    selected = input("\nВведите номера языков через запятую (или Enter для пропуска): ").strip()
+    if selected:
+        try:
+            indices = [int(x.strip()) for x in selected.split(',') if x.strip().isdigit()]
+            chosen_langs = [langs[i - 1] for i in indices if 1 <= i <= len(langs)]
+            for lang in chosen_langs:
+                output_lang_file = f"Файлы_{lang.replace(' ', '_')}.txt"
+                with open(output_lang_file, 'w', encoding='utf-8') as out_lang:
+                    out_lang.write(f"=== Файлы языка: {lang} ===\n\n")
+                    for path, st, _ in results:
+                        if st['language'] == lang:
+                            out_lang.write(f"{path} | {st['size_kb']:.2f} KB\n")
+                print(f"Создан файл: {output_lang_file}")
+        except Exception as e:
+            print(f"Ошибка при выборе языков: {e}")
+
     print(f"\nСтатистика сохранена в '{output_stats_file}'")
     print(f"Листинг сохранён в '{output_listing_file}'")
 
 def main():
-    # Текущая директория
     current_dir = os.getcwd()
-
-    # Сканируем поддиректории (исключая те, которые начинаются с точки и т.п. — можно скорректировать)
     subdirs = [d for d in os.listdir(current_dir) if os.path.isdir(d)]
     subdirs.sort()
 
     print("Выберите, что сканировать:")
     print("0) Вся текущая директория (рекурсивно)")
-
     for idx, d in enumerate(subdirs, start=1):
         print(f"{idx}) {d}")
 
     choice = input("Введите номер пункта: ").strip()
 
-    # Если выбран 0, сканируем всю текущую директорию
     if choice == '0':
         target_dir = current_dir
     else:
-        # Пробуем преобразовать choice к индексу
         try:
             idx_choice = int(choice)
             if 1 <= idx_choice <= len(subdirs):
@@ -322,7 +290,6 @@ def main():
             print("Неверный ввод. Выходим.")
             return
 
-    # Запускаем сбор статистики и листинга
     generate_listing_and_stats(
         root_dir=target_dir,
         output_stats_file="Общая информация",
@@ -331,4 +298,5 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
