@@ -22,7 +22,7 @@ def detect_language_by_extension(filename: str) -> str:
         'go': 'GOLANG',
         'rs': 'Rust',
         'c': 'C',
-        'h': 'C/C++ Header',
+        'h': 'C_C++ Header',
         'cpp': 'C++',
         'cc': 'C++',
         'cxx': 'C++',
@@ -298,5 +298,6 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 
