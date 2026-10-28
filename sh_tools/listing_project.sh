@@ -16,6 +16,7 @@ detect_language() {
         jsx) echo "JavaScript (React JSX)" ;;
         ts) echo "TypeScript" ;;
         tsx) echo "TypeScript (React TSX)" ;;
+        yarn) echo "Yarn" ;;
         java) echo "Java" ;;
         kt) echo "Kotlin" ;;
         kts) echo "Kotlin Script" ;;
